@@ -14,6 +14,17 @@ db.once("open", () =>{
     console.log("Database connected");
 });
 
+mongoose.connect("mongodb://localhost:27017/clientDB", {
+  useUnifiedTopology: true,
+  useNewUrlParser: true
+});
+
+const userSchema = new mongoose.Schema({
+  email: String,
+  password: String
+});
+
+const User = new mongoose.model("User", userSchema);
 
 const app = express();
 app.set('view engine' , 'ejs');
@@ -25,6 +36,46 @@ app.use(methodOverride('_method'));
 app.get('/',(req,res)=>{
     res.render('index1');
 })
+
+app.get("/login", function(req, res) {
+  res.render("login");
+});
+
+app.get("/register", function(req, res) {
+  res.render("register");
+});
+
+app.post("/register", function(req, res) {
+  const newUser = new User({
+    username: req.body.username,
+    password: req.body.password
+  });
+  newUser.save(function(err){
+    if(err){
+      console.log(err);
+    }
+    else{
+      res.render("home");
+    }
+  });
+});
+
+app.post("/login",function(req,res){
+  const username = req.body.username;
+  const password = req.body.password;
+
+  User.findOne({email:username},function(err,foundUser){
+    if(err){
+      console.log(err);
+    } else {
+      if(foundUser){
+        if(foundUser.password === password){
+          res.render("home")
+        }
+      }
+    }
+  });
+});
 
 app.get('/campgrounds',async(req,res)=>{
     const campgrounds =await Campground.find({});     //find all the campgrounds from the database
